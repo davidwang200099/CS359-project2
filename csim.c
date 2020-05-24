@@ -14,7 +14,6 @@ int setSize;
 int blockSize;
 
 int hitTime = 0;
-;
 int missTime = 0;
 int evictTime = 0;
 
