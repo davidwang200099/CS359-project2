@@ -13,7 +13,9 @@
 
 int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 void trans(int M, int N, int A[N][M], int B[M][N]);
-#define bsize 8
+#define STRIDE32 8
+#define STRIDE61 16
+#define STRIDE64 8
 
 /*
  * transpose_submit - This is the solution transpose function that you
@@ -25,13 +27,29 @@ void trans(int M, int N, int A[N][M], int B[M][N]);
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
   int i, j, ii, jj;
-  int a, b /*, c, d*/;
+  int a, b, c, d, e, f, g, h;
   switch (M) {
     case 32:
-      for (ii = 0; ii < M; ii += 8) {
+      for (ii = 0; ii < N; ii += 8) {
         for (jj = 0; jj < M; jj += 8) {
-          for (i = ii; i < ii + 8; i++) {
-            for (j = jj; j < jj + 8; j++)
+          for (i = ii; i < ii + 8 && i < N; i++) {
+            for (j = jj; j < jj + 8 && j < M; j++)
+              if (i != j)
+                B[j][i] = A[i][j];
+              else {
+                a = A[i][j];
+                b = i;
+              }
+            if (ii == jj) B[b][b] = a;
+          }
+        }
+      }
+      break;
+    case 61:
+      for (ii = 0; ii < N; ii += STRIDE61) {
+        for (jj = 0; jj < M; jj += STRIDE61) {
+          for (i = ii; i < ii + STRIDE61 && i < N; i++) {
+            for (j = jj; j < jj + STRIDE61 && j < M; j++)
               if (i != j)
                 B[j][i] = A[i][j];
               else {
@@ -44,10 +62,31 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
       }
       break;
     case 64:
-      for (ii = 0; ii < M; ii += 8) {
-        for (jj = 0; jj < M; jj += 8) {
-          for (i = ii; i < ii + 8; i++) {
-            for (j = jj; j < jj + 8; j++)
+      for (ii = 0; ii < M; ii += STRIDE64) {
+        for (jj = 0; jj < M; jj += STRIDE64) {
+          for(i=ii;i<ii+4;i++){
+            a=A[i][jj];b=A[i][jj+1];c=A[i][jj+2];d=A[i][jj+3];
+            e=A[i][jj+4];f=A[i][jj+5];g=A[i][jj+6];h=A[i][jj+7];
+            B[jj][i]=a;B[jj][i+4]=e;B[jj+1][i]=b;B[jj+1][i+4]=f;
+            B[jj+2][i]=c;B[jj+2][i+4]=g;B[jj+3][i]=d;B[jj+3][i+4]=h;
+          }
+          for(i=jj;i<jj+4;i++){
+            a=B[i][ii+4];b=B[i][ii+5];c=B[i][ii+6];d=B[i][ii+7];
+            e=A[ii+4][i];f=A[ii+5][i];g=A[ii+6][i];h=A[ii+7][i];
+            B[i][ii+4]=e;B[i][ii+5]=f;B[i][ii+6]=g;B[i][ii+7]=h;
+            B[i+4][ii]=a;B[i+4][ii+1]=b;B[i+4][ii+2]=c;B[i+4][ii+3]=d;
+          }
+          for(j=jj+4;j<jj+STRIDE64;j++){
+            a=A[ii+4][j];b=A[ii+5][j];c=A[ii+6][j];d=A[ii+7][j];
+            B[j][ii+4]=a;B[j][ii+5]=b;B[j][ii+6]=c;B[j][ii+7]=d;
+          }
+        }
+      }
+      /*for (ii = 0; ii < M; ii += STRIDE64) {
+        for (jj = ((ii & 4) >> 2) ? M - STRIDE64 : 0; jj >= 0 && jj < M;
+             jj = ((ii & 4) >> 2) ? (jj - STRIDE64) : (jj + STRIDE64)) {
+          for (i = ii; i < ii + STRIDE64; i++) {
+            for (j = jj; j < jj + STRIDE64; j++)
               if (i != j)
                 B[j][i] = A[i][j];
               else {
@@ -57,7 +96,7 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
             if (ii == jj) B[b][b] = a;
           }
         }
-      }
+      }*/
       break;
     default:
       trans(M, N, A, B);
