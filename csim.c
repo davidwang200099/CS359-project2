@@ -90,7 +90,6 @@ int main(int argc, char** argv) {
       cachesize = ((1 << setBits)) * (associativity) *
                   (blockSize = (1 << blockBits) + 4 + sizeof(int)));
   setSize = blockSize * associativity;
-  // printf("setSize:%d,blockSize:%d\n",setSize,blockSize);
   memset(cache, 0, cachesize);
   char order, comma;
   unsigned long address;
@@ -98,27 +97,22 @@ int main(int argc, char** argv) {
   while (!feof(trace)) {
     fscanf(trace, "%c%lx%c%d", &order, &address, &comma, &oprtsize);
     switch (order) {
-      case 'I':
-        break;
       case 'S':
-        // printf("S %lx%c%d\n",address,comma,oprtsize);
         store(flag, cache, address, oprtsize);
         break;
       case 'L':
-        // printf("L %lx%c%d\n", address, comma, oprtsize);
         load(flag, cache, address, oprtsize);
         break;
       case 'M':
-        // printf("M %lx%c%d\n", address, comma, oprtsize);
         modify(flag, cache, address, oprtsize);
         break;
+      default:break;
     }
 
     char* tagptr;
     for (tagptr = cache; tagptr < cache + cachesize; tagptr += blockSize)
       USEDTIMES(tagptr) -= 1;
   }
-  // printf("hits:%d misses:%d evictions:%d\n", hitTime, missTime, evictTime);
   printSummary(hitTime, missTime, evictTime);
   fclose(trace);
   free(cache);
@@ -126,12 +120,17 @@ int main(int argc, char** argv) {
 }
 
 void printHelpInfo() {
-  printf("./csim [-hv] -s <s> -E <E> -b <b> -t <tracefile>\n");
-  printf("\t-v\tOptional verbose flag that displays trace info\n");
-  printf("\t-s <s>\tNumber of set index bits\n");
-  printf("\t-E <E>\tAssociativity\n");
-  printf("\t-b <b>\tNumber of block bits\n");
-  printf("\t-t <tracefile>\tName of valgrind trace to display\n");
+  printf("Usage: ./csim [-hv] -s <num> -E <num> -b <num> -t <file>");
+  printf("Options:\n");
+  printf("  -h         Print this help message.\n");
+  printf("  -v         Optional verbose flag.\n");
+  printf("  -s <num>   Number of set index bits.\n");
+  printf("  -E <num>   Number of lines per set.\n");
+  printf("  -b <num>   Number of block offset bits.\n");
+  printf("  -t <file>  Trace file.\n\n");
+  printf("Examples:\n");
+  printf("  linux>  ./csim -s 4 -E 1 -b 4 -t traces/yi.trace\n");
+  printf("  linux>  ./csim -v -s 8 -E 2 -b 4 -t traces/yi.trace\n");
 }
 
 int getBlockNumber(unsigned long address, int blockBits) {

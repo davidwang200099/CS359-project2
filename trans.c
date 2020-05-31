@@ -7,15 +7,16 @@
  * A transpose function is evaluated by counting the number of misses
  * on a 1KB direct mapped cache with a block size of 32 bytes.
  */
+
+/*
+*  Name: Zehao Wang StudentID:518021910976
+*/
 #include <stdio.h>
 
 #include "cachelab.h"
 
 int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 void trans(int M, int N, int A[N][M], int B[M][N]);
-#define STRIDE32 8
-#define STRIDE61 16
-#define STRIDE64 8
 
 /*
  * transpose_submit - This is the solution transpose function that you
@@ -46,10 +47,10 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
       }
       break;
     case 61:
-      for (ii = 0; ii < N; ii += STRIDE61) {
-        for (jj = 0; jj < M; jj += STRIDE61) {
-          for (i = ii; i < ii + STRIDE61 && i < N; i++) {
-            for (j = jj; j < jj + STRIDE61 && j < M; j++)
+      for (ii = 0; ii < N; ii += 16) {
+        for (jj = 0; jj < M; jj += 16) {
+          for (i = ii; i < ii + 16 && i < N; i++) {
+            for (j = jj; j < jj + 16 && j < M; j++)
               if (i != j)
                 B[j][i] = A[i][j];
               else {
@@ -62,8 +63,8 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
       }
       break;
     case 64:
-      for (ii = 0; ii < M; ii += STRIDE64) {
-        for (jj = 0; jj < M; jj += STRIDE64) {
+      for (ii = 0; ii < M; ii += 8) {
+        for (jj = 0; jj < M; jj += 8) {
           for(i=ii;i<ii+4;i++){
             a=A[i][jj];b=A[i][jj+1];c=A[i][jj+2];d=A[i][jj+3];
             e=A[i][jj+4];f=A[i][jj+5];g=A[i][jj+6];h=A[i][jj+7];
@@ -76,27 +77,12 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
             B[i][ii+4]=e;B[i][ii+5]=f;B[i][ii+6]=g;B[i][ii+7]=h;
             B[i+4][ii]=a;B[i+4][ii+1]=b;B[i+4][ii+2]=c;B[i+4][ii+3]=d;
           }
-          for(j=jj+4;j<jj+STRIDE64;j++){
+          for(j=jj+4;j<jj+8;j++){
             a=A[ii+4][j];b=A[ii+5][j];c=A[ii+6][j];d=A[ii+7][j];
             B[j][ii+4]=a;B[j][ii+5]=b;B[j][ii+6]=c;B[j][ii+7]=d;
           }
         }
       }
-      /*for (ii = 0; ii < M; ii += STRIDE64) {
-        for (jj = ((ii & 4) >> 2) ? M - STRIDE64 : 0; jj >= 0 && jj < M;
-             jj = ((ii & 4) >> 2) ? (jj - STRIDE64) : (jj + STRIDE64)) {
-          for (i = ii; i < ii + STRIDE64; i++) {
-            for (j = jj; j < jj + STRIDE64; j++)
-              if (i != j)
-                B[j][i] = A[i][j];
-              else {
-                a = A[i][j];
-                b = i;
-              }
-            if (ii == jj) B[b][b] = a;
-          }
-        }
-      }*/
       break;
     default:
       trans(M, N, A, B);
