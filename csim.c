@@ -180,24 +180,24 @@ void store(char v, char* cache, unsigned long address, int oprtsize) {
     tagptr += blockSize;
   }
 
-  if (flag) {
+  if (flag) {//cache hit
     hitTime++;
     USEDTIMES(tagptr) = MAXUSEDTIMES;
     if (v) printf("S %lx,%d hit\n", address, oprtsize);
     return;
-  } else {
+  } else {//cache miss
     missTime++;
     int leastused = 0;
     short leastusedTimes = 32767;
     for (tagptr = setbaseptr, i = 0; i < associativity; i++) {
-      if (!VALID(tagptr)) {
+      if (!VALID(tagptr)) {//There is still cold block.No need to evict.
         VALID(tagptr) = 1;
         USEDTIMES(tagptr) = MAXUSEDTIMES;
         TAGNUMBER(tagptr) = tagNumber;
         flag = 1;
         if (v) printf("S %lx,%d miss\n", address, oprtsize);
         return;
-      } else {
+      } else {//Look for least recently used block.
         if (USEDTIMES(tagptr) < leastusedTimes) {
           leastused = i;
           leastusedTimes = USEDTIMES(tagptr);
@@ -205,7 +205,7 @@ void store(char v, char* cache, unsigned long address, int oprtsize) {
       }
       tagptr += blockSize;
     }
-    if (!flag) {
+    if (!flag) {//No cold block. Must Evict.
       evictTime++;
       if (v) printf("S %lx,%d miss eviction\n", address, oprtsize);
       tagptr = setbaseptr + leastused * blockSize;
@@ -230,24 +230,24 @@ void load(char v, char* cache, unsigned long address, int oprtsize) {
     }
     tagptr += blockSize;
   }
-  if (flag) {
+  if (flag) {//cache hit
     hitTime++;
     USEDTIMES(tagptr) = MAXUSEDTIMES;
     if (v) printf("L %lx,%d hit\n", address, oprtsize);
     return;
-  } else {
+  } else {//cache miss
     missTime++;
     int leastused = 0;
     short leastusedTimes = 32767;
     for (tagptr = setbaseptr, i = 0; i < associativity; i++) {
-      if (!VALID(tagptr)) {
+      if (!VALID(tagptr)) {//There is still cold block.No need to evict.
         flag = 1;
         VALID(tagptr) = 1;
         TAGNUMBER(tagptr) = tagNumber;
         USEDTIMES(tagptr) = MAXUSEDTIMES;
         if (v) printf("L %lx,%d miss\n", address, oprtsize);
         return;
-      } else {
+      } else {//Look for least recently used block.
         if (USEDTIMES(tagptr) < leastusedTimes) {
           leastused = i;
           leastusedTimes = USEDTIMES(tagptr);
@@ -255,7 +255,7 @@ void load(char v, char* cache, unsigned long address, int oprtsize) {
       }
       tagptr += blockSize;
     }
-    if (!flag) {
+    if (!flag) {//No cold block. Must Evict.
       evictTime++;
       if (v) printf("L %lx,%d miss eviction\n", address, oprtsize);
       tagptr = setbaseptr + leastused * blockSize;
@@ -283,25 +283,25 @@ void modify(char v, char* cache, unsigned long address, int oprtsize) {
     tagptr += blockSize;
   }
 
-  if (flag) {
+  if (flag) {//cache hit
     hitTime += 2;
     USEDTIMES(tagptr) = MAXUSEDTIMES;
     if (v) printf("M %lx,%d hit hit\n", address, oprtsize);
     return;
-  } else {
+  } else {//cache miss
     missTime++;
     hitTime++;
     int leastused = 0;
     short leastusedTimes = 32767;
     for (tagptr = setbaseptr, i = 0; i < associativity; i++) {
-      if (!VALID(tagptr)) {
+      if (!VALID(tagptr)) {//There is still cold block.No need to evict.
         flag = 1;
         VALID(tagptr) = 1;
         TAGNUMBER(tagptr) = tagNumber;
         USEDTIMES(tagptr) = MAXUSEDTIMES;
         if (v) printf("M %lx,%d miss hit\n", address, oprtsize);
         return;
-      } else {
+      } else {//Look for least recently used block.
         if (USEDTIMES(tagptr) < leastusedTimes) {
           leastused = i;
           leastusedTimes = USEDTIMES(tagptr);
@@ -309,7 +309,7 @@ void modify(char v, char* cache, unsigned long address, int oprtsize) {
       }
       tagptr += blockSize;
     }
-    if (!flag) {
+    if (!flag) {//No cold block. Must Evict.
       evictTime++;
       if (v) printf("M %lx,%d miss eviction hit\n", address, oprtsize);
       tagptr = setbaseptr + leastused * blockSize;
