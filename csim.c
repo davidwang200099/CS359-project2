@@ -1,7 +1,3 @@
-/*
-    Name: Zehao Wang
-    Student ID: 518021910976
-*/
 #include <ctype.h>
 #include <getopt.h>
 #include <stdio.h>
