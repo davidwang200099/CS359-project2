@@ -8,9 +8,6 @@
  * on a 1KB direct mapped cache with a block size of 32 bytes.
  */
 
-/*
-*  Name: Zehao Wang StudentID:518021910976
-*/
 #include <stdio.h>
 
 #include "cachelab.h"
